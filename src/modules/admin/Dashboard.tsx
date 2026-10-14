@@ -33,17 +33,19 @@ export function Dashboard() {
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
   const [incidents, setIncidents] = useState<Incident[]>([])
+  const [sentOrders, setSentOrders] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings(), fetchAllIncidents()])
-      .then(([to, ga, sh, ap, bl, inc]) => {
+    Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings(), fetchAllIncidents(), fetchSentOrdersCount()])
+      .then(([to, ga, sh, ap, bl, inc, so]) => {
         setToOrder(to)
         setGaps(ga)
         setShortages(sh)
         setApartments(ap)
         setBuildings(bl)
         setIncidents(inc)
+        setSentOrders(so)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -90,6 +92,7 @@ export function Dashboard() {
     { label: t.admin.dashboard.gaps, count: incompleteCount, icon: Boxes, tone: 'text-warn', to: '/admin/apartments' },
     { label: t.admin.dashboard.pendingIncidents, count: pendingIncidents, icon: ClipboardList, tone: 'text-accent', to: '/admin/more/incidents' },
     { label: t.admin.dashboard.unprocessedShortages, count: shortages.length, icon: AlertTriangle, tone: 'text-bad', to: '/admin' },
+    { label: t.admin.dashboard.ordersInTransit, count: sentOrders, icon: Truck, tone: 'text-accent', to: '/admin/more/orders' },
   ]
 
   return (
