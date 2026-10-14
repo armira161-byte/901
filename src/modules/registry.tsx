@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense, useState, useEffect } from 'react'
+import { Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { SvLayout } from '@/modules/core/SvLayout'
 import { useAuth } from '@/modules/core/store'
 import { useI18n } from '@/i18n'
@@ -28,6 +28,24 @@ const NormTemplatesPage = lazy(() => import('@/modules/admin/NormTemplatesPage')
 const CatalogPage = lazy(() => import('@/modules/admin/CatalogPage').then(m => ({ default: m.CatalogPage })))
 const DocumentsPage = lazy(() => import('@/modules/admin/DocumentsPage').then(m => ({ default: m.DocumentsPage })))
 const DocumentDetailPage = lazy(() => import('@/modules/admin/DocumentDetailPage').then(m => ({ default: m.DocumentDetailPage })))
+const InventoryScreen = lazy(() => import('@/modules/admin/InventoryScreen').then(m => ({ default: m.InventoryScreen })))
+const InventoriesPage = lazy(() => import('@/modules/admin/InventoriesPage').then(m => ({ default: m.InventoriesPage })))
+
+function ApartmentInventoryRoute() {
+  const { id } = useParams<{ id: string }>()
+  const aptId = Number(id)
+  const [apartmentCode, setApartmentCode] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    if (!aptId) return
+    import('@/modules/admin/api').then(({ fetchApartmentsAdmin }) => {
+      fetchApartmentsAdmin().then((apts) => {
+        const apt = apts.find((a) => a.id === aptId)
+        if (apt) setApartmentCode(apt.code)
+      })
+    })
+  }, [aptId])
+  return <InventoryScreen scope="apartment" apartmentId={aptId} apartmentCode={apartmentCode} />
+}
 
 function Loading() {
   const { t } = useI18n()
@@ -77,6 +95,9 @@ export function AdminRoutes() {
           <Route path="more/catalog" element={<CatalogPage />} />
           <Route path="more/documents" element={<DocumentsPage />} />
           <Route path="more/documents/:id" element={<DocumentDetailPage />} />
+          <Route path="more/inventories" element={<InventoriesPage />} />
+          <Route path="stock/inventory" element={<InventoryScreen scope="warehouse" />} />
+          <Route path="apartments/:id/inventory" element={<ApartmentInventoryRoute />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </Suspense>

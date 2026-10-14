@@ -306,3 +306,47 @@ export interface PostDocumentResult {
   doc_number: string
   lines: number
 }
+
+export type InventoryScope = 'apartment' | 'warehouse'
+export type InventoryStatus = 'open' | 'closed' | 'void'
+export type InventoryLineDecision = 'pending' | 'accepted' | 'rejected'
+
+export interface InventoryRow {
+  id: string
+  scope: InventoryScope
+  apartment_id: number | null
+  status: InventoryStatus
+  note: string | null
+  doc_id: string | null
+  created_by: string | null
+  created_at: string
+  closed_by: string | null
+  closed_at: string | null
+}
+
+export interface InventoryWithApt extends InventoryRow {
+  apartment_code: string | null
+  doc_number: string | null
+}
+
+export interface InventoryLineRow {
+  id: number
+  inventory_id: string
+  item_id: number
+  expected: number
+  actual: number
+  decision: InventoryLineDecision
+  move_id: number | null
+  item_name: string
+  base_unit: BaseUnit
+  pack_size: number
+  pack_label: string
+}
+
+export interface InventoryCloseResult {
+  doc_id: string | null
+  doc_number: string | null
+  adjusted: number
+  shortages: Array<{ item_id: number; name: string; qty: number }>
+  surpluses: Array<{ item_id: number; name: string; qty: number }>
+}

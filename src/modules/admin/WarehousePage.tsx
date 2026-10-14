@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { fetchWarehouseStock, fetchStockMoves } from '@/modules/admin/api'
 import type { WarehouseStockRow, StockMoveRow } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty, formatDateTime } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
-import { Search } from 'lucide-react'
+import { Search, ClipboardCheck } from 'lucide-react'
 
 type KindFilter = 'all' | 'assets' | 'consumables'
 
@@ -30,6 +30,7 @@ export function WarehousePage() {
   const [movesLoading, setMovesLoading] = useState(false)
   const [movesOffset, setMovesOffset] = useState(0)
   const [hasMoreMoves, setHasMoreMoves] = useState(false)
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const belowOnly = searchParams.get('below') === '1'
 
@@ -97,7 +98,16 @@ export function WarehousePage() {
 
   return (
     <div className="px-4 pt-5 pb-28 lg:px-0 lg:pt-0">
-      <h1 className="text-xl font-semibold text-ink mb-4">{t.admin.stock.title}</h1>
+      <div className="flex items-center gap-3 mb-4">
+        <h1 className="text-xl font-semibold text-ink">{t.admin.stock.title}</h1>
+        <button
+          onClick={() => navigate('/admin/stock/inventory')}
+          className="ml-auto bg-surface border border-line rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 hover:bg-app transition-colors"
+        >
+          <ClipboardCheck className="w-4 h-4 text-accent" />
+          {t.admin.inventory.warehouse}
+        </button>
+      </div>
 
       <div className="flex gap-2.5 flex-wrap mb-3.5">
         <div className="relative flex-1 min-w-[140px]">

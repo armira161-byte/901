@@ -22,6 +22,11 @@ import type {
   DocumentWithSupplier,
   AttachmentRow,
   PostDocumentResult,
+  InventoryRow,
+  InventoryWithApt,
+  InventoryLineRow,
+  InventoryCloseResult,
+  InventoryScope,
 } from '@/lib/database.types'
 
 // ---- Queries ----
@@ -534,4 +539,140 @@ export async function itemHasHistory(itemId: number): Promise<boolean> {
     supabase.from('norm_rules').select('id', { head: true, count: 'exact' }).eq('item_id', itemId),
   ])
   return (moves.count ?? 0) > 0 || (norms.count ?? 0) > 0
+}
+
+// ---- Inventory ----
+
+export async function fetchOpenInventory(scope: InventoryScope, apartmentId?: number): Promise<InventoryRow | null> {
+  let query = supabase
+    .from('inventories')
+    .select('id,scope,apartment_id,status,note,doc_id,created_by,created_at,closed_by,closed_at')
+    .eq('scope', scope)
+    .eq('status', 'open')
+  if (scope === 'apartment') {
+    query = query.eq('apartment_id', apartmentId ?? 0)
+  } else {
+    query = query.is('apartment_id', null)
+  }
+  const { data, error } = await query.maybeSingle()
+  if (error) throw new Error(error.message)
+  return data as InventoryRow | null
+}
+
+export async function startInventory(scope: InventoryScope, apartmentId?: number, note?: string): Promise<string> {
+  const { data, error } = await supabase.rpc('inventory_start', {
+    p_scope: scope,
+    p_apartment: apartmentId ?? null,
+    p_note: note ?? null,
+  })
+  if (error) throw new Error(error.message)
+  return data as string
+}
+
+export async function fetchInventoryLines(inventoryId: string): Promise<InventoryLineRow[]> {
+  const { data, error } = await supabase
+    .from('inventory_lines')
+    .select('id,inventory_id,item_id,expected,actual,decision,move_id')
+    .eq('inventory_id', inventoryId)
+    .order('item_id')
+  if (error) throw new Error(error.message)
+  const rows = (data ?? []) as Array<Omit<InventoryLineRow, 'item_name' | 'base_unit' | 'pack_size' | 'pack_label'>>
+  const itemIds = Array.from(new Set(rows.map((r) => r.item_id)))
+  const itemMap = new Map<number, { name: string; base_unit: BaseUnit; pack_size: number; pack_label: string }>()
+  if (itemIds.length) {
+    const { data: items, error: itemsError } = await supabase
+      .from('items')
+      .select('id,name,base_unit,pack_size,pack_label')
+      .in('id', itemIds)
+    if (itemsError) throw new Error(itemsError.message)
+    for (const i of items ?? []) {
+      itemMap.set(i.id, { name: i.name, base_unit: i.base_unit, pack_size: i.pack_size, pack_label: i.pack_label })
+    }
+  }
+  return rows.map((r) => {
+    const item = itemMap.get(r.item_id)
+    return {
+      ...r,
+      item_name: item?.name ?? '?',
+      base_unit: item?.base_unit ?? 'pcs',
+      pack_size: item?.pack_size ?? 1,
+      pack_label: item?.pack_label ?? '',
+    }
+  })
+}
+
+export async function setInventoryActual(inventoryId: string, itemId: number, actual: number): Promise<void> {
+  const { error } = await supabase.rpc('inventory_set_actual', {
+    p_inventory: inventoryId,
+    p_item: itemId,
+    p_actual: actual,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function closeInventory(inventoryId: string, rejectItems: number[]): Promise<InventoryCloseResult> {
+  const { data, error } = await supabase.rpc('inventory_close', {
+    p_inventory: inventoryId,
+    p_reject_items: rejectItems,
+  })
+  if (error) throw new Error(error.message)
+  return data as InventoryCloseResult
+}
+
+export async function cancelInventory(inventoryId: string): Promise<void> {
+  const { error } = await supabase.rpc('inventory_cancel', {
+    p_inventory: inventoryId,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function fetchInventories(): Promise<InventoryWithApt[]> {
+  const { data, error } = await supabase
+    .from('inventories')
+    .select('id,scope,apartment_id,status,note,doc_id,created_by,created_at,closed_by,closed_at')
+    .order('created_at', { ascending: false })
+    .limit(100)
+  if (error) throw new Error(error.message)
+  const rows = (data ?? []) as InventoryRow[]
+  const aptIds = Array.from(new Set(rows.map((r) => r.apartment_id).filter((id): id is number => id !== null)))
+  const docIds = Array.from(new Set(rows.map((r) => r.doc_id).filter((id): id is string => id !== null)))
+  const [aptMap, docMap] = await Promise.all([
+    aptIds.length ? supabase.from('apartments').select('id,code').in('id', aptIds) : Promise.resolve({ data: [], error: null as null | { message: string } }),
+    docIds.length ? supabase.from('documents').select('id,number').in('id', docIds) : Promise.resolve({ data: [], error: null as null | { message: string } }),
+  ])
+  if (aptMap.error) throw new Error(aptMap.error.message)
+  if (docMap.error) throw new Error(docMap.error.message)
+  const aptCodeMap = new Map<number, string>((aptMap.data ?? []).map((a: { id: number; code: string }) => [a.id, a.code]))
+  const docNumMap = new Map<string, string>((docMap.data ?? []).map((d: { id: string; number: string }) => [d.id, d.number]))
+  return rows.map((r) => ({
+    ...r,
+    apartment_code: r.apartment_id ? aptCodeMap.get(r.apartment_id) ?? null : null,
+    doc_number: r.doc_id ? docNumMap.get(r.doc_id) ?? null : null,
+  }))
+}
+
+export async function fetchInventoryDetail(inventoryId: string): Promise<{ inventory: InventoryWithApt | null; lines: InventoryLineRow[] }> {
+  const { data: invData, error: invError } = await supabase
+    .from('inventories')
+    .select('id,scope,apartment_id,status,note,doc_id,created_by,created_at,closed_by,closed_at')
+    .eq('id', inventoryId)
+    .maybeSingle()
+  if (invError) throw new Error(invError.message)
+  if (!invData) return { inventory: null, lines: [] }
+  const inv = invData as InventoryRow
+  let apartmentCode: string | null = null
+  let docNumber: string | null = null
+  if (inv.apartment_id) {
+    const { data: apt } = await supabase.from('apartments').select('code').eq('id', inv.apartment_id).single()
+    apartmentCode = apt?.code ?? null
+  }
+  if (inv.doc_id) {
+    const { data: doc } = await supabase.from('documents').select('number').eq('id', inv.doc_id).single()
+    docNumber = doc?.number ?? null
+  }
+  const lines = await fetchInventoryLines(inventoryId)
+  return {
+    inventory: { ...inv, apartment_code: apartmentCode, doc_number: docNumber },
+    lines,
+  }
 }

@@ -18,7 +18,7 @@ import type { Apartment, ApartmentGapRow, NormRuleRow, CleaningEventRow, Staff, 
 import { useI18n } from '@/i18n'
 import { formatDateTime, formatQty, cairoLocalToISO } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
-import { ClipboardList, History, Plus, Trash2, CreditCard as Edit3, Gift, RotateCcw, X, Check, Loader as Loader2 } from 'lucide-react'
+import { ClipboardList, History, Plus, Trash2, CreditCard as Edit3, Gift, RotateCcw, X, Check, Loader as Loader2, ClipboardCheck } from 'lucide-react'
 
 type Tab = 'norms' | 'history'
 
@@ -191,7 +191,16 @@ export function AdminApartmentDetail() {
             <p className="text-muted text-sm">{apartment.type}</p>
 
             {/* Completeness */}
-            <div className="font-semibold text-sm text-ink mt-4 mb-2">{t.admin.apartments.completeness} {n(String(completenessPct))}%</div>
+            <div className="flex items-center justify-between mt-4 mb-2">
+              <span className="font-semibold text-sm text-ink">{t.admin.apartments.completeness} {n(String(completenessPct))}%</span>
+              <button
+                onClick={() => navigate(`/admin/apartments/${aptId}/inventory`)}
+                className="text-xs bg-app text-ink rounded-lg px-3 py-1.5 flex items-center gap-1.5 hover:bg-accent-soft transition-colors"
+              >
+                <ClipboardCheck className="w-3.5 h-3.5" />
+                {t.admin.inventory.apartment}
+              </button>
+            </div>
             <ProgressBar value={completenessPct} color={pctColor(completenessPct)} />
 
             {/* Gap list + issue all */}
