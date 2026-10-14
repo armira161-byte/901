@@ -120,6 +120,15 @@ export const ar: Dict = {
     noGroup: 'من غير مجموعة',
     units: { pcs: 'قطعة', g: 'جم', ml: 'مل' },
   },
+  scanner: {
+    title: 'قارئ QR',
+    cameraError: 'الكاميرا مش متاحة. اتأكد من الأذونات أو دخل الكود يدوي.',
+    manualEntry: 'دخل الكود يدوي',
+    manualPlaceholder: 'SKLAD-I-123 أو SKLAD-A-5',
+    manualSubmit: 'دوّر',
+    backToCamera: 'ارجع للكاميرا',
+    unknownCode: 'كود مش معروف',
+  },
   admin: {
     nav: {
       home: 'الرئيسية',
@@ -238,6 +247,7 @@ export const ar: Dict = {
       orders: 'الطلبات',
       suppliers: 'المورّدين',
       settings: 'الإعدادات',
+      qrLabels: 'QR ملصقات',
     },
     staff: {
       title: 'الموظفين',
@@ -481,6 +491,13 @@ export const ar: Dict = {
       save: 'احفظ',
       saved: 'الإعداد اتحدّث',
       currency: 'العملة',
+    },
+    qrLabels: {
+      title: 'QR ملصقات',
+      print: 'طباعة',
+      items: 'الحاجات',
+      apartments: 'الشقق',
+      noSelection: 'مفيش حاجة مختارة',
     },
   },
 }

@@ -5,7 +5,8 @@ import type { WarehouseStockRow, StockMoveRow } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty, formatDateTime } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
-import { Search, ClipboardCheck } from 'lucide-react'
+import { ScannerModal } from '@/components/ScannerModal'
+import { Search, ClipboardCheck, ScanLine } from 'lucide-react'
 
 type KindFilter = 'all' | 'assets' | 'consumables'
 
@@ -30,6 +31,7 @@ export function WarehousePage() {
   const [movesLoading, setMovesLoading] = useState(false)
   const [movesOffset, setMovesOffset] = useState(0)
   const [hasMoreMoves, setHasMoreMoves] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const belowOnly = searchParams.get('below') === '1'
@@ -116,8 +118,14 @@ export function WarehousePage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.admin.stock.search}
-            className="w-full bg-surface rounded-lg pl-10 pr-4 py-2 text-sm border border-line focus:border-accent focus:outline-none"
+            className="w-full bg-surface rounded-lg pl-10 pr-10 py-2 text-sm border border-line focus:border-accent focus:outline-none"
           />
+          <button
+            onClick={() => setScannerOpen(true)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-muted hover:text-accent"
+          >
+            <ScanLine className="w-4 h-4" />
+          </button>
         </div>
         <select
           value={categoryFilter}
@@ -240,6 +248,20 @@ export function WarehousePage() {
           <div className="bg-surface border border-line rounded-xl px-4 py-6 text-center text-muted text-sm">{t.common.noResults}</div>
         )}
       </div>
+      {scannerOpen && (
+        <ScannerModal
+          onClose={() => setScannerOpen(false)}
+          onScanItem={(itemId) => {
+            setSearch('')
+            setKindFilter('all')
+            setCategoryFilter('all')
+            setExpandedId(itemId)
+          }}
+          onScanApartment={(aptId) => {
+            navigate(`/admin/apartments/${aptId}`)
+          }}
+        />
+      )}
     </div>
   )
 }

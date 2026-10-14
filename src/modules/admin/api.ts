@@ -528,7 +528,7 @@ export async function createItem(params: {
   if (error) throw new Error(error.message)
 }
 
-export async function updateItem(id: number, patch: Partial<Pick<Item, 'name' | 'category_id' | 'base_unit' | 'pack_size' | 'pack_label' | 'min_stock' | 'track_on_hand' | 'active' | 'supplier_id'>>): Promise<void> {
+export async function updateItem(id: number, patch: Partial<Pick<Item, 'name' | 'category_id' | 'base_unit' | 'pack_size' | 'pack_label' | 'min_stock' | 'track_on_hand' | 'active' | 'supplier_id' | 'qr_code'>>): Promise<void> {
   const { error } = await supabase.from('items').update(patch).eq('id', id)
   if (error) throw new Error(error.message)
 }
