@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchAllIncidents, approveIncident } from '@/modules/admin/api'
+import { fetchAllIncidents, approveIncident, createIncidentPhotoUrl } from '@/modules/admin/api'
 import { fetchApartmentsAdmin } from '@/modules/admin/api'
 import type { Incident, Apartment, IncidentStatus, IncidentKind } from '@/lib/database.types'
+import { ImageOff } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { formatDateTime } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
@@ -40,6 +41,8 @@ export function AdminIncidents() {
   const [note, setNote] = useState('')
   const [force, setForce] = useState(false)
   const [processing, setProcessing] = useState(false)
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({})
+  const [photoModal, setPhotoModal] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([fetchAllIncidents(), fetchApartmentsAdmin()])
@@ -49,6 +52,18 @@ export function AdminIncidents() {
   }, [])
 
   const aptMap = useMemo(() => new Map(apartments.map((a) => [a.id, a.code])), [apartments])
+
+  useEffect(() => {
+    const paths = incidents.flatMap((inc) => inc.photo_paths ?? [])
+    const missing = paths.filter((p) => !(p in photoUrls))
+    if (missing.length === 0) return
+    missing.forEach((path) => {
+      setPhotoUrls((prev) => ({ ...prev, [path]: null }))
+      createIncidentPhotoUrl(path).then((url) => {
+        setPhotoUrls((prev) => ({ ...prev, [path]: url }))
+      })
+    })
+  }, [incidents, photoUrls])
 
   const handleAction = async () => {
     if (!actionIncident) return
@@ -99,6 +114,28 @@ export function AdminIncidents() {
                       <span className="text-xs text-muted">·</span>
                       <span className="text-xs text-muted">{n(formatDateTime(inc.created_at))}</span>
                     </div>
+                    {inc.photo_paths && inc.photo_paths.length > 0 && (
+                      <div className="grid grid-cols-3 gap-1.5 mt-2">
+                        {inc.photo_paths.map((path, idx) => {
+                          const url = photoUrls[path]
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => url && setPhotoModal(url)}
+                              className="aspect-square rounded-lg overflow-hidden bg-app border border-line relative"
+                            >
+                              {url ? (
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <ImageOff className="w-5 h-5 text-muted" />
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                     {inc.comment && <p className="text-xs text-muted mt-1.5 bg-app rounded-lg px-2.5 py-1.5">{inc.comment}</p>}
                     {inc.resolution_note && <p className="text-xs text-muted mt-1">{inc.resolution_note}</p>}
                     {inc.status === 'new' && (
@@ -157,6 +194,18 @@ export function AdminIncidents() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {photoModal && (
+        <div
+          className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4"
+          onClick={() => setPhotoModal(null)}
+        >
+          <button className="absolute top-4 right-4 w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <X className="w-5 h-5 text-white" />
+          </button>
+          <img src={photoModal} alt="" className="max-w-full max-h-full rounded-xl" />
         </div>
       )}
     </div>

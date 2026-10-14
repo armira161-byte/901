@@ -771,6 +771,59 @@ export async function poReceive(orderId: string, lines?: Array<{ item_id: number
   return data as POReceiveResult
 }
 
+// ---- Suppliers CRUD (admin_all policy) ----
+
+export async function createSupplier(name: string, phone: string | null, note: string | null): Promise<Supplier> {
+  const { data, error } = await supabase
+    .from('suppliers')
+    .insert({ name, phone: phone || null, note: note || null })
+    .select('id,name,phone,note')
+    .single()
+  if (error) throw new Error(error.message)
+  return data as Supplier
+}
+
+export async function updateSupplier(id: number, patch: Partial<Pick<Supplier, 'name' | 'phone' | 'note'>>): Promise<void> {
+  const { error } = await supabase.from('suppliers').update(patch).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteSupplier(id: number): Promise<void> {
+  const { error } = await supabase.from('suppliers').delete().eq('id', id)
+  if (error) throw Object.assign(new Error(error.message), { code: error.code })
+}
+
+// ---- Settings CRUD (admin_all policy) ----
+
+export interface SettingRow {
+  key: string
+  value: string
+}
+
+export async function fetchSettings(): Promise<SettingRow[]> {
+  const { data, error } = await supabase.from('settings').select('key,value').order('key')
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((r: { key: string; value: unknown }) => ({
+    key: r.key,
+    value: typeof r.value === 'string' ? r.value : JSON.stringify(r.value),
+  }))
+}
+
+export async function updateSetting(key: string, value: string): Promise<void> {
+  const { error } = await supabase.from('settings').update({ value }).eq('key', key)
+  if (error) throw new Error(error.message)
+}
+
+// ---- Incident photos (signed URLs) ----
+
+export async function createIncidentPhotoUrl(path: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from('incident-photos')
+    .createSignedUrl(path, 3600)
+  if (error) return null
+  return data?.signedUrl ?? null
+}
+
 export async function fetchSentOrdersCount(): Promise<number> {
   const { count, error } = await supabase
     .from('purchase_orders_v')
