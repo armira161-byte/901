@@ -27,6 +27,11 @@ import type {
   InventoryLineRow,
   InventoryCloseResult,
   InventoryScope,
+  PurchaseOrderRow,
+  POLineRow,
+  POGenerateResult,
+  POReceiveResult,
+  POStatus,
 } from '@/lib/database.types'
 
 // ---- Queries ----
@@ -675,4 +680,102 @@ export async function fetchInventoryDetail(inventoryId: string): Promise<{ inven
     inventory: { ...inv, apartment_code: apartmentCode, doc_number: docNumber },
     lines,
   }
+}
+
+// ---- Purchase Orders ----
+
+export async function fetchPurchaseOrders(status?: POStatus): Promise<PurchaseOrderRow[]> {
+  let query = supabase
+    .from('purchase_orders_v')
+    .select('id,number,status,supplier_id,supplier,note,created_at,sent_at,received_at,lines,total_qty,received_qty,est_cost')
+    .order('created_at', { ascending: false })
+    .limit(100)
+  if (status) query = query.eq('status', status)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []) as PurchaseOrderRow[]
+}
+
+export async function fetchPurchaseOrder(id: string): Promise<PurchaseOrderRow | null> {
+  const { data, error } = await supabase
+    .from('purchase_orders_v')
+    .select('id,number,status,supplier_id,supplier,note,created_at,sent_at,received_at,lines,total_qty,received_qty,est_cost')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data as PurchaseOrderRow | null
+}
+
+export async function fetchPurchaseOrderLines(orderId: string): Promise<POLineRow[]> {
+  const { data, error } = await supabase
+    .from('purchase_order_lines')
+    .select('id,order_id,item_id,qty,unit_cost,received_qty')
+    .eq('order_id', orderId)
+    .order('item_id')
+  if (error) throw new Error(error.message)
+  const rows = (data ?? []) as Array<Omit<POLineRow, 'item_name' | 'base_unit' | 'pack_size' | 'pack_label'>>
+  const itemIds = Array.from(new Set(rows.map((r) => r.item_id)))
+  const itemMap = new Map<number, { name: string; base_unit: BaseUnit; pack_size: number; pack_label: string }>()
+  if (itemIds.length) {
+    const { data: items, error: itemsError } = await supabase
+      .from('items')
+      .select('id,name,base_unit,pack_size,pack_label')
+      .in('id', itemIds)
+    if (itemsError) throw new Error(itemsError.message)
+    for (const i of items ?? []) {
+      itemMap.set(i.id, { name: i.name, base_unit: i.base_unit, pack_size: i.pack_size, pack_label: i.pack_label })
+    }
+  }
+  return rows.map((r) => {
+    const item = itemMap.get(r.item_id)
+    return {
+      ...r,
+      item_name: item?.name ?? '?',
+      base_unit: item?.base_unit ?? 'pcs',
+      pack_size: item?.pack_size ?? 1,
+      pack_label: item?.pack_label ?? '',
+    }
+  })
+}
+
+export async function poGenerate(): Promise<POGenerateResult[]> {
+  const { data, error } = await supabase.rpc('po_generate')
+  if (error) throw new Error(error.message)
+  return data as POGenerateResult[]
+}
+
+export async function poSetLine(orderId: string, itemId: number, qty: number, unitCost?: number | null): Promise<void> {
+  const { error } = await supabase.rpc('po_set_line', {
+    p_order: orderId,
+    p_item: itemId,
+    p_qty: qty,
+    p_unit_cost: unitCost ?? null,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function poSetStatus(orderId: string, status: 'sent' | 'cancelled'): Promise<void> {
+  const { error } = await supabase.rpc('po_set_status', {
+    p_order: orderId,
+    p_status: status,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function poReceive(orderId: string, lines?: Array<{ item_id: number; qty: number; unit_cost?: number | null }> | null): Promise<POReceiveResult> {
+  const { data, error } = await supabase.rpc('po_receive', {
+    p_order: orderId,
+    p_lines: lines ?? null,
+  })
+  if (error) throw new Error(error.message)
+  return data as POReceiveResult
+}
+
+export async function fetchSentOrdersCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from('purchase_orders_v')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'sent')
+  if (error) throw new Error(error.message)
+  return count ?? 0
 }

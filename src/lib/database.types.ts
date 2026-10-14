@@ -350,3 +350,47 @@ export interface InventoryCloseResult {
   shortages: Array<{ item_id: number; name: string; qty: number }>
   surpluses: Array<{ item_id: number; name: string; qty: number }>
 }
+
+export type POStatus = 'draft' | 'sent' | 'received' | 'cancelled'
+
+export interface PurchaseOrderRow {
+  id: string
+  number: string
+  status: POStatus
+  supplier_id: number | null
+  supplier: string | null
+  note: string | null
+  created_at: string
+  sent_at: string | null
+  received_at: string | null
+  lines: number
+  total_qty: number
+  received_qty: number
+  est_cost: number | null
+}
+
+export interface POLineRow {
+  id: number
+  order_id: string
+  item_id: number
+  qty: number
+  unit_cost: number | null
+  received_qty: number
+  item_name: string
+  base_unit: BaseUnit
+  pack_size: number
+  pack_label: string
+}
+
+export interface POGenerateResult {
+  order_id: string
+  number: string
+  supplier_id: number | null
+}
+
+export interface POReceiveResult {
+  doc_id: string
+  doc_number: string
+  lines: number
+  order_status: POStatus
+}

@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings, fetchAllIncidents } from '@/modules/admin/api'
+import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings, fetchAllIncidents, fetchSentOrdersCount } from '@/modules/admin/api'
 import type { ToOrderRow, ApartmentGapRow, EventRow, Apartment, Building, AptType, Incident } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
-import { AlertTriangle, TrendingDown, PackageX, ClipboardList, Boxes, Wrench, ArrowDownToLine, Trash2, CheckCircle2 } from 'lucide-react'
+import { TriangleAlert as AlertTriangle, TrendingDown, PackageX, ClipboardList, Boxes, Wrench, ArrowDownToLine, Trash2, CircleCheck as CheckCircle2, Truck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 function pctColor(p: number): string {
