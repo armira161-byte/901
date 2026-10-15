@@ -119,15 +119,6 @@ export const en: Dict = {
     noGroup: 'No group',
     units: { pcs: 'pcs', g: 'g', ml: 'ml' },
   },
-  scanner: {
-    title: 'QR Scanner',
-    cameraError: 'Camera unavailable. Check permissions or use manual entry.',
-    manualEntry: 'Enter code manually',
-    manualPlaceholder: 'SKLAD-I-123 or SKLAD-A-5',
-    manualSubmit: 'Find',
-    backToCamera: 'Back to camera',
-    unknownCode: 'Unknown code',
-  },
   admin: {
     nav: {
       home: 'Home',
@@ -246,7 +237,6 @@ export const en: Dict = {
       orders: 'Orders',
       suppliers: 'Suppliers',
       settings: 'Settings',
-      qrLabels: 'QR labels',
     },
     staff: {
       title: 'Staff',
@@ -490,13 +480,6 @@ export const en: Dict = {
       save: 'Save',
       saved: 'Setting updated',
       currency: 'Currency',
-    },
-    qrLabels: {
-      title: 'QR labels',
-      print: 'Print',
-      items: 'Items',
-      apartments: 'Apartments',
-      noSelection: 'Nothing selected',
     },
   },
 }

@@ -34,7 +34,6 @@ const OrdersPage = lazy(() => import('@/modules/admin/OrdersPage').then(m => ({ 
 const OrderDetailPage = lazy(() => import('@/modules/admin/OrderDetailPage').then(m => ({ default: m.OrderDetailPage })))
 const SuppliersPage = lazy(() => import('@/modules/admin/SuppliersPage').then(m => ({ default: m.SuppliersPage })))
 const SettingsPage = lazy(() => import('@/modules/admin/SettingsPage').then(m => ({ default: m.SettingsPage })))
-const QRLabelsPage = lazy(() => import('@/modules/admin/QRLabelsPage').then(m => ({ default: m.QRLabelsPage })))
 
 function ApartmentInventoryRoute() {
   const { id } = useParams<{ id: string }>()
@@ -105,7 +104,6 @@ export function AdminRoutes() {
           <Route path="more/orders/:id" element={<OrderDetailPage />} />
           <Route path="more/suppliers" element={<SuppliersPage />} />
           <Route path="more/settings" element={<SettingsPage />} />
-          <Route path="more/qr-labels" element={<QRLabelsPage />} />
           <Route path="stock/inventory" element={<InventoryScreen scope="warehouse" />} />
           <Route path="apartments/:id/inventory" element={<ApartmentInventoryRoute />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />

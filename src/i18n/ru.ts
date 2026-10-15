@@ -117,15 +117,6 @@ export const ru = {
     noGroup: 'Без группы',
     units: { pcs: 'шт', g: 'г', ml: 'мл' },
   },
-  scanner: {
-    title: 'Сканер QR',
-    cameraError: 'Камера недоступна. Проверьте разрешения или используйте ручной ввод.',
-    manualEntry: 'Ввести код вручную',
-    manualPlaceholder: 'SKLAD-I-123 или SKLAD-A-5',
-    manualSubmit: 'Найти',
-    backToCamera: 'К камере',
-    unknownCode: 'Неизвестный код',
-  },
   admin: {
     nav: {
       home: 'Главная',
@@ -244,7 +235,6 @@ export const ru = {
       orders: 'Заказы',
       suppliers: 'Поставщики',
       settings: 'Настройки',
-      qrLabels: 'QR-этикетки',
     },
     staff: {
       title: 'Сотрудники',
@@ -488,13 +478,6 @@ export const ru = {
       save: 'Сохранить',
       saved: 'Настройка обновлена',
       currency: 'Валюта',
-    },
-    qrLabels: {
-      title: 'QR-этикетки',
-      print: 'Печать',
-      items: 'Позиции',
-      apartments: 'Квартиры',
-      noSelection: 'Ничего не выбрано',
     },
   },
 }

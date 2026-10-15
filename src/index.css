@@ -119,5 +119,4 @@ body {
   .border-line { border-color: #ccc !important; }
   .print-area { page-break-inside: avoid; }
   .print-area + .print-area { page-break-before: auto; }
-  @page { size: A4; margin: 12mm; }
 }

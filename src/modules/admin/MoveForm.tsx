@@ -5,8 +5,7 @@ import type { WarehouseStockRow, Apartment, Staff, Supplier, PostDocumentResult 
 import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
-import { Plus, Minus, Trash2, Loader as Loader2, Check, X, FileText, ScanLine } from 'lucide-react'
-import { ScannerModal } from '@/components/ScannerModal'
+import { Plus, Minus, Trash2, Loader as Loader2, Check, X, FileText } from 'lucide-react'
 
 interface MoveOpDef {
   op: string
@@ -54,7 +53,6 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const [search, setSearch] = useState('')
   const [posting, setPosting] = useState(false)
   const [result, setResult] = useState<PostDocumentResult | null>(null)
-  const [scannerOpen, setScannerOpen] = useState(false)
 
   useEffect(() => {
     Promise.all([fetchWarehouseStock(), fetchApartmentsAdmin(), fetchAllStaff(), fetchSuppliers()])
@@ -269,20 +267,14 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
           )}
 
           {/* Item search */}
-          <div className="relative">
+          <div>
             <label className="block text-sm font-medium text-ink mb-1.5">{t.admin.move.items}</label>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t.admin.stock.search}
-              className="w-full bg-surface rounded-lg pl-4 pr-10 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-2"
+              className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-2"
             />
-            <button
-              onClick={() => setScannerOpen(true)}
-              className="absolute right-2 top-[38px] w-7 h-7 flex items-center justify-center text-muted hover:text-accent"
-            >
-              <ScanLine className="w-4 h-4" />
-            </button>
             {search.trim() && (
               <div className="bg-surface rounded-lg border border-line max-h-48 overflow-y-auto">
                 {filteredStock.map((s) => (
@@ -376,30 +368,6 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
           </button>
         </div>
       </div>
-
-      {scannerOpen && (
-        <ScannerModal
-          onClose={() => setScannerOpen(false)}
-          onScanItem={(itemId) => {
-            const item = stock.find((s) => s.item_id === itemId)
-            if (item) {
-              addToCart(item)
-              toast(item.name, 'success')
-            } else {
-              toast(t.scanner.unknownCode, 'error')
-            }
-          }}
-          onScanApartment={(aptId) => {
-            if (opDef.needsApartment) {
-              setApartmentId(aptId)
-              const apt = apartments.find((a) => a.id === aptId)
-              toast(apt?.code ?? '', 'success')
-            } else {
-              toast(t.scanner.unknownCode, 'error')
-            }
-          }}
-        />
-      )}
     </>
   )
 }
